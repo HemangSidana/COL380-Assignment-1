@@ -112,36 +112,20 @@ ThreadData makedata(double** _a, double** _l, double** _u, ll _k, ll _n, ll _sta
 }
 
 void parallel(double **a, double **l, double **u, ll k, ll n, ll t){
-    vector<ll> v;
-    ll cur=0; ll val=n-1-k;
-    while(val>0){
-        cur+=val;
-        v.push_back(cur);
-        val--;
-    }
-    ll comp=cur/t;
-    ll num=1;
-    vector<ll> ind; ind.push_back(0ll);
-    ll i=1;
-    while(i<v.size()){
-        if(v[i]>comp*num){
-            ind.push_back(i);
-            num++;
-        }
-        i++;
-    }
-    ind.push_back(1ll*v.size());
-    ll z= 1ll*ind.size()-1;
-    pthread_t threads[z];
-    vector<ThreadData> td(z);
-    for(int i=0;i<z;i++){
-        td[i]=makedata(a,l,u,k,n,ind[i],ind[i+1]);
+    int itr=(n-1-k)/t;
+    pthread_t threads[t];
+    vector<ThreadData> td(t);
+    for(int i=0;i<t;i++){
+        td[i]=makedata(a,l,u,k,n,itr*i,itr*(i+1));
         pthread_create(&threads[i], NULL, work, &td[i]);
     }
-    for (int i = 0; i < z; i++) {
+    pthread_t th;
+    ThreadData tdata=makedata(a,l,u,k,n,itr*t,n-1-k);
+    pthread_create(&th,NULL,work,&tdata);
+    for (int i = 0; i < t; i++) {
         pthread_join(threads[i], NULL);
-        pthread_detach(threads[i]);
     }
+    pthread_join(th,NULL);
 }
 
 int main(int argc, const char * argv[]){
