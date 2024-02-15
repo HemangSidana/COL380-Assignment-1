@@ -76,7 +76,7 @@ int main(int argc, const char * argv[]){
     random_device rd;
     mt19937 gen(rd());
     uniform_real_distribution<double> dist(-1000.0, 1000.0);
-
+    double parallel_time=0.0;
     double **a= create(n);
     for(int i=0;i<n;i++){
         for(int j=0;j<n;j++){
@@ -117,12 +117,16 @@ int main(int argc, const char * argv[]){
             l[z][k]=a[z][k]/u[k][k];
             u[k][z]=a[k][z];
         }
+        auto x = std::chrono::high_resolution_clock::now();
         #pragma omp parallel for num_threads(t)
         for(int i=k+1;i<n;i++){
             for(int z=k+1;z<n;z++){
                 a[i][z]-=l[i][k]*u[k][z];
             }
         }
+        auto y = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> duration =y - x;
+        parallel_time+=duration.count();
     }
     auto end = std::chrono::high_resolution_clock::now();
     // cout<<"permutation"<<endl;
@@ -144,5 +148,6 @@ int main(int argc, const char * argv[]){
     std::chrono::duration<double> duration_seconds = end - start;
     double seconds = duration_seconds.count();
     std::cout << "Time taken: " << seconds << " seconds" << std::endl;
+    std::cout << "Parallel Time taken: " << parallel_time << " seconds" << std::endl;
     return 0;
 }
